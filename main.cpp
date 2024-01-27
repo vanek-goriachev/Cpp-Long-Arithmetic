@@ -195,8 +195,145 @@ public:
     };
 
     // Перегрузка арифметических операторов
-    BigNumber operator+(const BigNumber &other) const;
-    BigNumber operator-(const BigNumber &other) const;
+    BigNumber operator+(const BigNumber &other) const
+    {
+        // Проверяем, что точность обоих операндов одинакова
+        if (this->precision != other.precision)
+        {
+            throw invalid_argument("Precision mismatch between BigNumber operands.");
+        }
+
+        BigNumber result("0", this->precision); // Инициализируем результирующее число
+
+        // Если числа имеют разные знаки, используем вычитание
+        if (this->negative != other.negative)
+        {
+            result = other - (-*this);
+            return result;
+        }
+
+        // Далее можно быть уверенными, что при сложении операндов с одним знаком он сохранится
+        result.negative = this->negative;
+
+        // Сложение дробной части
+        int carry = 0; // Перенос из предыдущего разряда
+        for (int i = precision - 1; i >= 0; --i)
+        {
+            int sum = (this->decimalPart[i] - '0') + (other.decimalPart[i] - '0') + carry;
+            result.decimalPart[i] = (sum % 10) + '0';
+            carry = sum / 10; // Сохраняем перенос для следующего шага
+        }
+
+        // Сложение целой части
+        size_t maxSize = max(this->integerPart.length(), other.integerPart.length());
+        string resultIntegerPart(maxSize, '0'); // Временно хранение целой части результата
+
+        for (int i = 0; i < maxSize; i += 1)
+        {
+            int digit1 = i < this->integerPart.length() ? this->integerPart[this->integerPart.length()-i-1] - '0' : 0;
+            int digit2 = i < other.integerPart.length() ? other.integerPart[other.integerPart.length()-i-1] - '0' : 0;
+            int sum = digit1 + digit2 + carry;
+            resultIntegerPart[maxSize-i-1] = (sum % 10) + '0';
+            carry = sum / 10;
+        }
+
+        // Если в конце остался перенос, добавляем его к результату
+        if (carry > 0)
+        {
+            resultIntegerPart = static_cast<char>(carry + '0') + resultIntegerPart;
+        }
+
+        result.integerPart = resultIntegerPart;
+
+        return result;
+    }
+
+    BigNumber operator-(const BigNumber &other) const
+    {
+        // Проверяем, что точность обоих операндов одинакова
+        if (this->precision != other.precision)
+        {
+            throw std::invalid_argument("Precision mismatch between BigNumber operands.");
+        }
+
+        BigNumber result("0", this->precision); // Инициализируем результирующее число
+        bool resultIsNegative = false; // Используется для хранения знака результата
+
+        // Если числа имеют разные знаки, используем сложение
+        if (this->negative != other.negative)
+        {
+            result = *this + (-other);
+            return result;
+        }
+
+        // Определение, какое число больше по абсолютной величине для корректного вычитания
+        bool swapOperands = false;
+        if (this->integerPart.length() < other.integerPart.length() ||
+            (this->integerPart.length() == other.integerPart.length() &&
+             this->integerPart.compare(other.integerPart) < 0))
+        {
+            swapOperands = true;
+        }
+
+        const string &largerIntPart = swapOperands ? other.integerPart : this->integerPart;
+        const string &smallerIntPart = swapOperands ? this->integerPart : other.integerPart;
+        const string &largerDecPart = swapOperands ? other.decimalPart : this->decimalPart;
+        const string &smallerDecPart = swapOperands ? this->decimalPart : other.decimalPart;
+
+        resultIsNegative = swapOperands ? !other.negative : this->negative;
+
+        string resultIntegerPart = string(max(largerIntPart.size(), smallerIntPart.size()), '0');
+        string resultDecimalPart = string(this->precision, '0');
+
+        // Вычитание дробной части
+        int carry = 0;
+        for (int i = precision - 1; i >= 0; --i)
+        {
+            int digit1 = largerDecPart[i] - '0';
+            int digit2 = i < smallerDecPart.length() ? smallerDecPart[i] - '0' : 0;
+            int diff = digit1 - digit2 - carry;
+            if (diff < 0)
+            {
+                diff += 10;
+                carry = 1;
+            } else
+            {
+                carry = 0;
+            }
+            resultDecimalPart[i] = diff + '0';
+        }
+
+        // Вычитание целой части
+        for (int i = resultIntegerPart.length() - 1, j = smallerIntPart.length() - 1; i >= 0; --i, --j)
+        {
+            int digit1 = largerIntPart[i] - '0';
+            int digit2 = j >= 0 ? smallerIntPart[j] - '0' : 0;
+            int diff = digit1 - digit2 - carry;
+            if (diff < 0)
+            {
+                diff += 10;
+                carry = 1;
+            } else
+            {
+                carry = 0;
+            }
+            resultIntegerPart[i] = diff + '0';
+        }
+
+        // Обрезаем лидирующие нули в целой части
+        auto nonZeroPos = resultIntegerPart.find_first_not_of('0');
+        if (nonZeroPos == string::npos)
+        {
+            nonZeroPos = resultIntegerPart.size() - 1;
+        }
+        resultIntegerPart = resultIntegerPart.substr(nonZeroPos);
+
+        result.integerPart = resultIntegerPart;
+        result.decimalPart = resultDecimalPart;
+        result.negative = resultIsNegative;
+
+        return result;
+    }
 
     BigNumber operator*(const BigNumber &other) const;
 
@@ -211,7 +348,15 @@ public:
     };
 
     // Перегрузка оператора присваивания
-    BigNumber &operator=(const BigNumber &other);
+    BigNumber &operator=(const BigNumber &other) {
+        if (this != &other) { // Проверка на самоприсваивание
+            integerPart = other.integerPart;
+            decimalPart = other.decimalPart;
+            negative = other.negative;
+            precision = other.precision;
+        }
+        return *this; // Возврат ссылки на текущий объект
+    }
 
     // Перегрузка операторов сравнения
     bool operator==(const BigNumber &other) const;
@@ -223,20 +368,42 @@ public:
     bool operator>(const BigNumber &other) const;
 
     // Дополнительные методы могут быть добавлены здесь, например:
-    // - методы для внутренней нормализации числа
     // - операторы +=, -=, *=, /=
     // - операторы сравнения <=, >=
 };
 
 int main()
 {
-    BigNumber n1("-12.01234567890123456789", 5);
-    cout << n1.ToString() << endl;
+    // Проверка конструктора из строкового значения
+//    BigNumber n1("-123.11234567890123456789", 5);
+    BigNumber n1("-123", 5);
+    cout << "n1 = " << n1.ToString() << endl;
 
-    BigNumber n2(float(-12.0123456789), 5);
-    cout << n2.ToString() << endl;
+    // Проверка конструктора из float значения
+//    BigNumber n2(float(-2.0123456789), 5);
+    BigNumber n2(float(-2), 5);
+    cout << "n2 = " << n2.ToString() << endl;
 
-    BigNumber n3(-0990912.01235, 5);
-    cout << n3.ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    // Проверка конструктора из double значения
+    BigNumber n3(0990912.01235, 5);
+    cout << "n3 = " << n3.ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << endl;
+
+    // Проверка унарного минуса
+    cout << "n1 * (-1): " << n1.ToString() << " * (-1) = " << (-n1).ToString() << endl;
+    cout << "n3 * (-1): " << n3.ToString() << " * (-1) = " << (-n3).ToString() << endl;
+    cout << endl;
+
+    // Проверка сложения
+    cout << "n1 + n2: " << (n1 + n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n3 + n3: " << (n3 + n3).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    // Тут по сути вычитание
+    cout << "n3 + n1: " << (n3 + n1).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+
+    // Проверка вычитания
+    cout << "n1 - n2: " << (n1 - n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n3 - n3: " << (n3 - n3).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    // Тут по сути сложение
+    cout << "n3 - n2: " << (n3 - n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
     return 0;
 }
