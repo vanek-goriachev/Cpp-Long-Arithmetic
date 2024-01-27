@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cmath>
 
 using namespace std;
 
@@ -67,10 +68,80 @@ public:
     }
 
     // Конструктор из float
-    BigNumber(float number, size_t precision);
+    BigNumber(float number, size_t prec) : precision(prec), negative(number < 0) {
+        // Используем тернарный оператор, чтобы установить значение флага отрицательности
+        if (number < 0) {
+            number = -number; // Работаем с числом как с положительным
+        }
+
+        // Вычисляем множитель для заданной точности
+        float multiplier = pow(10.0f, precision);
+
+        // Округляем число до заданной точности
+        number = round(number * multiplier) / multiplier;
+
+        // Получаем целую часть числа
+        auto integerPartNumber = static_cast<long long>(number);
+        integerPart = to_string(integerPartNumber);
+
+        // Получаем дробную часть числа
+        float decimalPartNumber = number - static_cast<float>(integerPartNumber);
+        auto decimalPartAsInt = static_cast<long long>(round(decimalPartNumber * multiplier));
+
+        decimalPart = to_string(decimalPartAsInt);
+
+        // Дополняем дробную часть нулями, если она короче нужной точности
+        while (decimalPart.length() < precision) {
+            decimalPart = "0" + decimalPart;
+        }
+
+        // Если округление дало нам "1000" в decimalPart при precision 3, необходимо перенести '1' в integerPart
+        if (decimalPart.length() > precision) {
+            // Добавляем переносимый '1' к целой части
+            integerPart = to_string(integerPartNumber + 1);
+
+            // Обрезаем "1000" до "000" в decimalPart
+            decimalPart = decimalPart.substr(1);
+        }
+    }
 
     // Конструктор из double
-    BigNumber(double number, size_t precision);
+    BigNumber(double number, size_t prec) : precision(prec), negative(number < 0) {
+        // Используем тернарный оператор, чтобы установить значение флага отрицательности
+        if (number < 0) {
+            number = -number; // Работаем с числом как с положительным
+        }
+
+        // Вычисляем множитель для заданной точности
+        float multiplier = pow(10.0f, precision);
+
+        // Округляем число до заданной точности
+        number = round(number * multiplier) / multiplier;
+
+        // Получаем целую часть числа
+        auto integerPartNumber = static_cast<long long>(number);
+        integerPart = to_string(integerPartNumber);
+
+        // Получаем дробную часть числа
+        float decimalPartNumber = number - static_cast<float>(integerPartNumber);
+        auto decimalPartAsInt = static_cast<long long>(round(decimalPartNumber * multiplier));
+
+        decimalPart = to_string(decimalPartAsInt);
+
+        // Дополняем дробную часть нулями, если она короче нужной точности
+        while (decimalPart.length() < precision) {
+            decimalPart = "0" + decimalPart;
+        }
+
+        // Если округление дало нам "1000" в decimalPart при precision 3, необходимо перенести '1' в integerPart
+        if (decimalPart.length() > precision) {
+            // Добавляем переносимый '1' к целой части
+            integerPart = to_string(integerPartNumber + 1);
+
+            // Обрезаем "1000" до "000" в decimalPart
+            decimalPart = decimalPart.substr(1);
+        }
+    }
 
     // Метод для получения строкового представления числа
     string ToString() const {
@@ -112,8 +183,14 @@ public:
 };
 
 int main() {
-    BigNumber n1("12.32", 5);
-
+    BigNumber n1("-12.01234567890123456789", 10);
     cout << n1.ToString() << endl;
+
+    BigNumber n2(float(-12.0123456789), 5);
+    cout << n2.ToString() << endl;
+
+    BigNumber n3(-12.01234567890123456789, 12);
+    cout << n3.ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << -12.01234567890123456789 << endl;
     return 0;
 }
