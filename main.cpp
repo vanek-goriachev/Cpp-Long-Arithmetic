@@ -496,8 +496,7 @@ public:
     };
 
     // Перегрузка оператора присваивания
-    BigNumber &operator=(const BigNumber &other)
-    {
+    BigNumber &operator=(const BigNumber &other) {
         if (this != &other)
         { // Проверка на самоприсваивание
             integerPart = other.integerPart;
@@ -507,6 +506,23 @@ public:
         }
         return *this; // Возврат ссылки на текущий объект
     }
+
+    BigNumber operator+=(const BigNumber& other) {
+        *this = *this + other;
+        return *this;
+    };
+    BigNumber operator-=(const BigNumber& other) {
+        *this = *this - other;
+        return *this;
+    };
+    BigNumber operator*=(const BigNumber& other) {
+        *this = *this * other;
+        return *this;
+    };
+    BigNumber operator/=(const BigNumber& other) {
+        *this = *this / other;
+        return *this;
+    };
 
     // Перегрузка операторов сравнения
     bool operator==(const BigNumber& other) const {
@@ -547,6 +563,26 @@ public:
         return !(*this < other);
     }
 
+    // Вычисление степени
+    BigNumber power(int n) const {
+        // Обработка отрицательных и нулевых показателей степени
+        if (n < 0) {
+            throw invalid_argument("BigNumber::power - negative exponents are not supported.");
+        } else if (n == 0) {
+            return BigNumber("1", this->precision); // Любое число в степени 0 равно 1
+        }
+
+        BigNumber result = *this; // Начинаем с текущего числа для n = 1
+        for (int i = 1; i < n; ++i) {
+            result *= *this; // Повторное умножение для вычисления степени
+        }
+
+        result.precision = this->precision;
+        result.normalize();
+
+        return result;
+    }
+
     // Взятие квадратного корня
 
     BigNumber sqrt() const {
@@ -580,7 +616,7 @@ public:
     }
 };
 
-BigNumber calculate_pi(int precision) {
+BigNumber calculatePi(int precision) {
     // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
     BigNumber magicNumber = BigNumber("3", precision).sqrt() / BigNumber("8", precision);
 
@@ -684,7 +720,19 @@ int main()
     cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
     cout << endl;
 
-    BigNumber magicNumber = calculate_pi(10);
+
+    // Проверка возведения в степень
+    BigNumber n13("2", 10);
+    BigNumber n14("1.01", 10);
+    cout << "n13 = " << n13.ToString() << endl;
+    cout << "n14 = " << n14.ToString() << endl;
+
+    cout << "n13 ** 8 = " << n13.power(8).ToString() << endl;
+    cout << "n14 ** 365 = " << n14.power(365).ToString() << endl;
+    cout << endl;
+
+
+    BigNumber magicNumber = calculatePi(10);
     cout << magicNumber.ToString() << endl;
     return 0;
 }
