@@ -60,6 +60,10 @@ public:
             {
                 integerPart.push_back(*it);
             }
+            else
+            {
+                throw invalid_argument("Initial string for BigNumber should satisfy pattern [+-]{0-9}.{0-9}");
+            }
             ++it;
         }
 
@@ -81,6 +85,10 @@ public:
             if (isdigit(*it))
             {
                 decimalPart.push_back(*it);
+            }
+            else
+            {
+                throw invalid_argument("Initial string for BigNumber should satisfy pattern [+-]{0-9}.{0-9}");
             }
             ++it;
         }
@@ -521,6 +529,38 @@ public:
     bool operator>=(const BigNumber& other) const {
         return !(*this < other);
     }
+
+    // Взятие квадратного корня
+
+    BigNumber sqrt() const {
+        // Проверка на отрицательное число
+        if (this->negative) {
+            throw invalid_argument("Cannot take the square root of a negative number.");
+        }
+
+        // Проверка, является ли число нулем
+        if (this->integerPart == "0" && this->decimalPart == string(this->precision, '0')) {
+            return BigNumber("0", this->precision);
+        }
+        if (this->integerPart == "1" && this->decimalPart == string(this->precision, '0')) {
+            return BigNumber("1", this->precision);
+        }
+
+        // Начальное приближение – половина числа
+        BigNumber guess(*this), zero("0", precision), two("2", precision);
+        guess.decimalPart = string(precision, '0');
+        guess = guess / two;
+
+        // Уточнение предположения с помощью метода Ньютона до достижения необходимой точности
+        BigNumber lastGuess("0", this->precision);
+
+        do {
+            lastGuess = guess; // Сохраняем последнее предположение
+            guess = guess - (guess*guess - *this) / (two * guess);
+        } while (guess != lastGuess);
+
+        return guess;
+    }
 };
 
 int main()
@@ -574,11 +614,49 @@ int main()
     BigNumber n8("1", 10);
     cout << "n6 = " << n6.ToString() << endl;
     cout << "n7 = " << n7.ToString() << endl;
+    cout << "n8 = " << n8.ToString() << endl;
 
     cout << "n6 / n7: " << (n6 / n7).ToString() << endl;
     cout << "n7 / n6: " << (n7 / n6).ToString() << endl;
     cout << "n6 / n6: " << (n6 / n6).ToString() << endl;
     cout << "n8 / n7: " << (n8 / n7).ToString() << endl;
     cout << "n7 / n8: " << (n7 / n8).ToString() << endl;
+    cout << endl;
+
+    // Проверка валидации при создании
+    BigNumber n9("+123.12", 5);
+    string args[] = {"123.12",
+                     "+123.12",
+                     "-123.12",
+                     ".12",
+                     "+.12",
+                     "-.12",
+                     "12.",
+                     "+12.",
+                     "-12.",
+                     "12",
+                     "+12",
+                     "-12",
+                     "0.0",
+                     "."};
+    for (const auto &item: args)
+    {
+        n9 = BigNumber(item, 5);
+        cout << item << " -> " << n9.ToString() << endl;
+    }
+    cout << endl;
+
+
+    // Проверка взятия корня
+    BigNumber n10("514", 10);
+    BigNumber n11("7", 10);
+    BigNumber n12("1", 10);
+    cout << "n10 = " << n10.ToString() << endl;
+    cout << "n11 = " << n11.ToString() << endl;
+    cout << "n12 = " << n12.ToString() << endl;
+
+    cout << "sqrt(n10) = " << n10.sqrt().ToString() << endl;
+    cout << "sqrt(n11) = " << n11.sqrt().ToString() << endl;
+    cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
     return 0;
 }
