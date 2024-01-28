@@ -181,6 +181,23 @@ public:
         }
     }
 
+    // Конструктор из long long
+    BigNumber(long long number, size_t prec) : precision(prec) {
+        // Проверка на отрицательное значение и установка флага
+        if (number < 0) {
+            negative = true;
+            number = -number; // Работаем с числом как с положительным
+        } else {
+            negative = false;
+        }
+
+        // Преобразование числа в строку для целой части
+        integerPart = to_string(number);
+
+        // Десятичная часть будет состоять из нулей, так как исходное число целое
+        decimalPart = string(precision, '0');
+    }
+
     // Метод для получения строкового представления числа
     string ToString() const
     {
@@ -563,6 +580,13 @@ public:
     }
 };
 
+BigNumber calculate_pi(int precision) {
+    // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
+    BigNumber magicNumber = BigNumber("3", precision).sqrt() / BigNumber("8", precision);
+
+    return magicNumber;
+}
+
 int main()
 {
     // Проверка конструктора из строкового значения
@@ -658,5 +682,9 @@ int main()
     cout << "sqrt(n10) = " << n10.sqrt().ToString() << endl;
     cout << "sqrt(n11) = " << n11.sqrt().ToString() << endl;
     cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
+    cout << endl;
+
+    BigNumber magicNumber = calculate_pi(10);
+    cout << magicNumber.ToString() << endl;
     return 0;
 }
