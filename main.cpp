@@ -509,6 +509,26 @@ public:
         return result;
     };
 
+    BigNumber operator+(const long long &other)
+    {
+        return *this + BigNumber(other, this->precision);
+    };
+
+    BigNumber operator-(const long long &other)
+    {
+        return *this - BigNumber(other, this->precision);
+    };
+
+    BigNumber operator*(const long long &other)
+    {
+        return *this * BigNumber(other, this->precision);
+    };
+
+    BigNumber operator/(const long long &other)
+    {
+        return *this / BigNumber(other, this->precision);
+    };
+
     // Перегрузка оператора присваивания
     BigNumber &operator=(const BigNumber &other)
     {
@@ -543,6 +563,30 @@ public:
     BigNumber operator/=(const BigNumber &other)
     {
         *this = *this / other;
+        return *this;
+    };
+
+    BigNumber operator+=(const long long &other)
+    {
+        *this = *this + BigNumber(other, this->precision);
+        return *this;
+    };
+
+    BigNumber operator-=(const long long &other)
+    {
+        *this = *this - BigNumber(other, this->precision);
+        return *this;
+    };
+
+    BigNumber operator*=(const long long &other)
+    {
+        *this = *this * BigNumber(other, this->precision);
+        return *this;
+    };
+
+    BigNumber operator/=(const long long &other)
+    {
+        *this = *this / BigNumber(other, this->precision);
         return *this;
     };
 
@@ -732,7 +776,14 @@ public:
         return arctanValue;
     }
 
-    static BigNumber calculatePi(int precision)
+    BigNumber abs() const
+    {
+        BigNumber result(*this);
+        result.negative = false;
+        return result;
+    }
+
+    static BigNumber calculatePiViaArctangents(int precision)
     {
         // https://www.youtube.com/watch?v=yxZcFt0yZfg <--- this one helped
         // https://youtu.be/6A75VBWXp2Y?si=CWKrnqiiXvqS6Fb0&t=1076
@@ -748,7 +799,6 @@ public:
         return Pi1;
     }
 };
-
 
 int main()
 {
@@ -866,7 +916,7 @@ int main()
     clock_t start = clock();
 
 
-    BigNumber magicNumber = BigNumber::calculatePi(1000);
+    BigNumber magicNumber = BigNumber::calculatePiViaArctangents(100);
     cout << magicNumber.ToString() << endl;
 
 
