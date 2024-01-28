@@ -251,15 +251,18 @@ public:
         }
 
         // Сложение целой части
-        size_t maxSize = max(this->integerPart.length(), other.integerPart.length());
+        size_t thisIntegerPartLength = this->integerPart.length();
+        size_t otherIntegerPartLength = other.integerPart.length();
+
+        size_t maxSize = max(thisIntegerPartLength, otherIntegerPartLength);
         string resultIntegerPart(maxSize, '0'); // Временно хранение целой части результата
 
         for (int i = 0; i < maxSize; i += 1)
         {
             int digit1 =
-                    i < this->integerPart.length() ? this->integerPart[this->integerPart.length() - i - 1] - '0' : 0;
+                    i < thisIntegerPartLength ? this->integerPart[thisIntegerPartLength - i - 1] - '0' : 0;
             int digit2 =
-                    i < other.integerPart.length() ? other.integerPart[other.integerPart.length() - i - 1] - '0' : 0;
+                    i < otherIntegerPartLength ? other.integerPart[otherIntegerPartLength - i - 1] - '0' : 0;
             int sum = digit1 + digit2 + carry;
             resultIntegerPart[maxSize - i - 1] = (sum % 10) + '0';
             carry = sum / 10;
@@ -316,7 +319,7 @@ public:
         for (int i = precision - 1; i >= 0; --i)
         {
             int digit1 = largerDecPart[i] - '0';
-            int digit2 = i < smallerDecPart.length() ? smallerDecPart[i] - '0' : 0;
+            int digit2 = i < this->precision ? smallerDecPart[i] - '0' : 0;
             int diff = digit1 - digit2 - carry;
             if (diff < 0)
             {
@@ -373,30 +376,34 @@ public:
         BigNumber result("0", this->precision + other.precision);
 
         // После умножения результат может иметь максимум такое количество цифр
-        string product(integerPart.length() + other.integerPart.length() +
-                       decimalPart.length() + other.decimalPart.length(), '0');
+        int productNumberLength = integerPart.length() + other.integerPart.length() +
+                                  precision + other.precision;
+        string product(productNumberLength, '0');
 
         string thisNumber = this->integerPart + this->decimalPart;
         string otherNumber = other.integerPart + other.decimalPart;
 
-        // Умножение без учета десятичной точки (как если бы числа были целыми)
-        for (int i = thisNumber.length() - 1; i >= 0; --i)
-        {
-            for (int j = otherNumber.length() - 1; j >= 0; --j)
-            {
-                int productIndex = (thisNumber.length() - 1 - i) + (otherNumber.length() - 1 - j);
-                int digitProduct = (thisNumber[i] - '0') * (otherNumber[j] - '0') +
-                                   (product[product.length() - 1 - productIndex] - '0');
+        int thisNumberLength = thisNumber.length(),
+                otherNumberLength = otherNumber.length();
 
-                product[product.length() - 1 - productIndex] = (digitProduct % 10) + '0';
+        // Умножение без учета десятичной точки (как если бы числа были целыми)
+        for (int i = thisNumberLength - 1; i >= 0; --i)
+        {
+            for (int j = otherNumberLength - 1; j >= 0; --j)
+            {
+                int productIndex = (thisNumberLength - 1 - i) + (otherNumberLength - 1 - j);
+                int digitProduct = (thisNumber[i] - '0') * (otherNumber[j] - '0') +
+                                   (product[productNumberLength - 1 - productIndex] - '0');
+
+                product[productNumberLength - 1 - productIndex] = (digitProduct % 10) + '0';
                 int carry = digitProduct / 10;
                 int k = productIndex + 1;
 
                 // Обрабатываем перенос на следующие позиции
                 while (carry > 0)
                 {
-                    digitProduct = (product[product.length() - 1 - k] - '0') + carry;
-                    product[product.length() - 1 - k] = (digitProduct % 10) + '0';
+                    digitProduct = (product[productNumberLength - 1 - k] - '0') + carry;
+                    product[productNumberLength - 1 - k] = (digitProduct % 10) + '0';
                     carry = digitProduct / 10;
                     ++k;
                 }
@@ -406,13 +413,13 @@ public:
         // Разделение на целую и дробную часть
         if (result.precision != 0)
         {
-            if (product.length() > result.precision)
+            if (productNumberLength > result.precision)
             {
-                result.decimalPart = product.substr(product.length() - result.precision);
-                result.integerPart = product.substr(0, product.length() - result.precision);
+                result.decimalPart = product.substr(productNumberLength - result.precision);
+                result.integerPart = product.substr(0, productNumberLength - result.precision);
             } else
             {
-                result.decimalPart = string(result.precision - product.length(), '0') + product;
+                result.decimalPart = string(result.precision - productNumberLength, '0') + product;
                 result.integerPart = "0";
             }
         } else
@@ -448,15 +455,17 @@ public:
         string quotient = "0";
         string remainder = "0";
 
+        int thisNumberLength = thisNumber.length(), thisNumberIntegerLength = this->integerPart.length();
+
         // Алгоритм деления в столбик
-        for (size_t i = 0; i < thisNumber.length(); ++i)
+        for (size_t i = 0; i < thisNumberLength; ++i)
         {
             // "Опускаем" следующую цифру
             remainder += thisNumber[i];
 
             // Если цифру, которую опустили, была из дробной части
             // Но также нам нужно снести столько цифр, сколько находится в дробной части второго числа
-            if (i == this->integerPart.length() + other.precision)
+            if (i == thisNumberIntegerLength + other.precision)
             {
                 quotient += ".";
             }
@@ -559,12 +568,15 @@ public:
         string thisDec = this->decimalPart;
         string otherDec = other.decimalPart;
 
-        if (thisDec.length() < otherDec.length())
+        int thisDecimalLength = thisDec.length();
+        int otherDecimalLength = otherDec.length();
+
+        if (thisDecimalLength < otherDecimalLength)
         {
-            thisDec.append(otherDec.length() - thisDec.length(), '0');
-        } else if (otherDec.length() < thisDec.length())
+            thisDec.append(otherDecimalLength - thisDecimalLength, '0');
+        } else if (otherDecimalLength < thisDecimalLength)
         {
-            otherDec.append(thisDec.length() - otherDec.length(), '0');
+            otherDec.append(thisDecimalLength - otherDecimalLength, '0');
         }
 
         // Сравниваем десятичные части
@@ -686,8 +698,10 @@ public:
         return guess;
     }
 
-    BigNumber arctan() const {
-        if (*this > BigNumber("1", precision) || *this < BigNumber("-1", precision)) {
+    BigNumber arctan() const
+    {
+        if (*this > BigNumber("1", precision) || *this < BigNumber("-1", precision))
+        {
             throw std::invalid_argument("The arctan function is only implemented for |x| <= 1.");
         }
 
@@ -697,7 +711,8 @@ public:
         BigNumber xSquared = *this * *this; // x^2, будет использоваться для вычисления каждого нового члена
         BigNumber divisor("1", precision); // Делитель для n
 
-        for (size_t n = 1; ; n += 2) {
+        for (size_t n = 1;; n += 2)
+        {
             // Вычисляем следующий член, используя предыдущий
             term *= -xSquared;
             divisor += BigNumber("2", precision); // Увеличиваем делитель на 2 для каждого нового члена ряда
@@ -705,7 +720,8 @@ public:
             BigNumber nextTerm = term / divisor;
 
             // Если следующий член ряда достаточно мал, останавливаем вычисления
-            if (nextTerm.ToString() == BigNumber("0", precision).ToString()) {
+            if (nextTerm.ToString() == BigNumber("0", precision).ToString())
+            {
                 break;
             }
 
@@ -725,14 +741,13 @@ public:
         BigNumber one("1", precision), two("2", precision),
                 three("3", precision), four("4", precision);
 
-        BigNumber Pi1 = four * ((one/two).arctan() + (one/three).arctan());
+        BigNumber Pi1 = four * ((one / two).arctan() + (one / three).arctan());
         Pi1.precision -= 10;
         Pi1.normalize();
 
         return Pi1;
     }
 };
-
 
 
 int main()
@@ -851,12 +866,12 @@ int main()
     clock_t start = clock();
 
 
-    BigNumber magicNumber = BigNumber::calculatePi(100);
+    BigNumber magicNumber = BigNumber::calculatePi(1000);
     cout << magicNumber.ToString() << endl;
 
 
     clock_t end = clock();
-    double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+    double seconds = (double) (end - start) / CLOCKS_PER_SEC;
     printf("The time: %f seconds\n", seconds);
 
     return 0;
