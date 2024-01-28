@@ -230,10 +230,12 @@ public:
 
         for (int i = 0; i < maxSize; i += 1)
         {
-            int digit1 = i < this->integerPart.length() ? this->integerPart[this->integerPart.length()-i-1] - '0' : 0;
-            int digit2 = i < other.integerPart.length() ? other.integerPart[other.integerPart.length()-i-1] - '0' : 0;
+            int digit1 =
+                    i < this->integerPart.length() ? this->integerPart[this->integerPart.length() - i - 1] - '0' : 0;
+            int digit2 =
+                    i < other.integerPart.length() ? other.integerPart[other.integerPart.length() - i - 1] - '0' : 0;
             int sum = digit1 + digit2 + carry;
-            resultIntegerPart[maxSize-i-1] = (sum % 10) + '0';
+            resultIntegerPart[maxSize - i - 1] = (sum % 10) + '0';
             carry = sum / 10;
         }
 
@@ -335,7 +337,76 @@ public:
         return result;
     }
 
-    BigNumber operator*(const BigNumber &other) const;
+    BigNumber operator*(const BigNumber &other) const
+    {
+        // Проверяем, что точность обоих операндов одинакова (в данном случае это не обязательно, но пусть будет)
+        if (this->precision != other.precision)
+        {
+            throw invalid_argument("Precision mismatch between BigNumber operands.");
+        }
+
+        // Инициализация результата умножения с верной точностью
+        BigNumber result("0", this->precision + other.precision);
+
+        // После умножения результат может иметь максимум такое количество цифр
+        string product(integerPart.length() + other.integerPart.length() +
+                       decimalPart.length() + other.decimalPart.length(), '0');
+
+        string thisNumber = this->integerPart + this->decimalPart;
+        string otherNumber = other.integerPart + other.decimalPart;
+
+        // Умножение без учета десятичной точки (как если бы числа были целыми)
+        for (int i = thisNumber.length() - 1; i >= 0; --i)
+        {
+            for (int j = otherNumber.length() - 1; j >= 0; --j)
+            {
+                int productIndex = (thisNumber.length() - 1 - i) + (otherNumber.length() - 1 - j);
+                int digitProduct = (thisNumber[i] - '0') * (otherNumber[j] - '0') +
+                                   (product[product.length() - 1 - productIndex] - '0');
+
+                product[product.length() - 1 - productIndex] = (digitProduct % 10) + '0';
+                int carry = digitProduct / 10;
+                int k = productIndex + 1;
+
+                // Обрабатываем перенос на следующие позиции
+                while (carry > 0)
+                {
+                    digitProduct = (product[product.length() - 1 - k] - '0') + carry;
+                    product[product.length() - 1 - k] = (digitProduct % 10) + '0';
+                    carry = digitProduct / 10;
+                    ++k;
+                }
+            }
+        }
+
+        // Разделение на целую и дробную часть
+        if (result.precision != 0)
+        {
+            if (product.length() > result.precision)
+            {
+                result.decimalPart = product.substr(product.length() - result.precision);
+                result.integerPart = product.substr(0, product.length() - result.precision);
+            } else
+            {
+                result.decimalPart = string(result.precision - product.length(), '0') + product;
+                result.integerPart = "0";
+            }
+        } else
+        {
+            result.integerPart = product;
+        }
+
+        // Установка знака результата
+        result.negative = this->negative != other.negative;
+
+        // Установка точности результата - такая же, как у операндов
+        result.precision = this->precision;
+
+        result.normalize();
+
+        return result;
+    }
+
 
     BigNumber operator/(const BigNumber &other) const;
 
@@ -348,8 +419,10 @@ public:
     };
 
     // Перегрузка оператора присваивания
-    BigNumber &operator=(const BigNumber &other) {
-        if (this != &other) { // Проверка на самоприсваивание
+    BigNumber &operator=(const BigNumber &other)
+    {
+        if (this != &other)
+        { // Проверка на самоприсваивание
             integerPart = other.integerPart;
             decimalPart = other.decimalPart;
             negative = other.negative;
@@ -359,34 +432,63 @@ public:
     }
 
     // Перегрузка операторов сравнения
-    bool operator==(const BigNumber &other) const;
+    bool operator==(const BigNumber &other) const
+    {
+        return this->negative == other.negative &&
+               this->integerPart == other.integerPart &&
+               this->decimalPart == other.decimalPart;
+    }
 
-    bool operator!=(const BigNumber &other) const;
+    bool operator!=(const BigNumber &other) const
+    {
+        return !(*this == other);
+    }
 
-    bool operator<(const BigNumber &other) const;
+    bool operator<(const BigNumber &other) const
+    {
+        if (this->negative != other.negative)
+        {
+            return this->negative; // Если одно число отрицательное, а другое положительное
+        }
+        if (this->integerPart != other.integerPart)
+        {
+            // Числа с более длинной целой частью больше
+            return this->integerPart.length() < other.integerPart.length() ^
+                   this->negative; // Если числа отрицательные, меньшее число будет иметь большую целую часть
+        }
+        // Если целые части равны, сравниваем десятичные части
+        return this->decimalPart < other.decimalPart ^ this->negative;
+    }
 
-    bool operator>(const BigNumber &other) const;
+    bool operator>(const BigNumber &other) const
+    {
+        return other < *this;
+    }
 
-    // Дополнительные методы могут быть добавлены здесь, например:
-    // - операторы +=, -=, *=, /=
-    // - операторы сравнения <=, >=
+    bool operator<=(const BigNumber &other) const
+    {
+        return !(*this > other);
+    }
+
+    bool operator>=(const BigNumber &other) const
+    {
+        return !(*this < other);
+    }
 };
 
 int main()
 {
     // Проверка конструктора из строкового значения
-//    BigNumber n1("-123.11234567890123456789", 5);
-    BigNumber n1("-123", 5);
+    BigNumber n1("-123.11234", 5);
     cout << "n1 = " << n1.ToString() << endl;
 
     // Проверка конструктора из float значения
-//    BigNumber n2(float(-2.0123456789), 5);
-    BigNumber n2(float(-2), 5);
+    BigNumber n2(float(-2.0123456789), 5);
     cout << "n2 = " << n2.ToString() << endl;
 
     // Проверка конструктора из double значения
     BigNumber n3(0990912.01235, 5);
-    cout << "n3 = " << n3.ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n3 = " << n3.ToString() << endl;
     cout << endl;
 
     // Проверка унарного минуса
@@ -395,15 +497,28 @@ int main()
     cout << endl;
 
     // Проверка сложения
-    cout << "n1 + n2: " << (n1 + n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
-    cout << "n3 + n3: " << (n3 + n3).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n1 + n2: " << (n1 + n2).ToString() << endl;
+    cout << "n3 + n3: " << (n3 + n3).ToString() << endl;
     // Тут по сути вычитание
-    cout << "n3 + n1: " << (n3 + n1).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n3 + n1: " << (n3 + n1).ToString() << endl;
+    cout << endl;
 
     // Проверка вычитания
-    cout << "n1 - n2: " << (n1 - n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
-    cout << "n3 - n3: " << (n3 - n3).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n1 - n2: " << (n1 - n2).ToString() << endl;
+    cout << "n3 - n3: " << (n3 - n3).ToString() << endl;
     // Тут по сути сложение
-    cout << "n3 - n2: " << (n3 - n2).ToString() << endl; // из численного значения перевод работает не слишком хорошо
+    cout << "n3 - n2: " << (n3 - n2).ToString() << endl;
+    cout << endl;
+
+    // Проверка умножения
+    BigNumber n4("-123.234", 5);
+    BigNumber n5(float(2.0962), 5);
+    cout << "n4 = " << n4.ToString() << endl;
+    cout << "n5 = " << n5.ToString() << endl;
+
+    cout << "n4 * n4: " << (n4 * n4).ToString() << endl;
+    cout << "n5 * n5: " << (n5 * n5).ToString() << endl;
+    cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
+    cout << endl;
     return 0;
 }
