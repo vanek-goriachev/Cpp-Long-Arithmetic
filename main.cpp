@@ -296,9 +296,7 @@ public:
 
         // Определение, какое число больше по абсолютной величине для корректного вычитания
         bool swapOperands = false;
-        if (this->integerPart.length() < other.integerPart.length() ||
-            (this->integerPart.length() == other.integerPart.length() &&
-             this->integerPart.compare(other.integerPart) < 0))
+        if (*this < other ^ this->negative)
         {
             swapOperands = true;
         }
@@ -542,10 +540,43 @@ public:
     // Перегрузка операторов сравнения
     bool operator==(const BigNumber &other) const
     {
-        return this->negative == other.negative &&
-               this->integerPart == other.integerPart &&
-               this->decimalPart == other.decimalPart;
+        if (this->precision != other.precision)
+        {
+            throw invalid_argument("Precision mismatch between BigNumber operands.");
+        }
+
+        // Проверяем целые части чисел на равенство
+        string thisInt = this->integerPart;
+        string otherInt = other.integerPart;
+
+        // Убираем ведущие нули для сравнения
+        thisInt.erase(0, min(thisInt.find_first_not_of('0'), thisInt.size() - 1));
+        otherInt.erase(0, min(otherInt.find_first_not_of('0'), otherInt.size() - 1));
+
+        if (thisInt != otherInt) return false;
+
+        // Дополняем десятичные части нулями справа до равной длины
+        string thisDec = this->decimalPart;
+        string otherDec = other.decimalPart;
+
+        if (thisDec.length() < otherDec.length())
+        {
+            thisDec.append(otherDec.length() - thisDec.length(), '0');
+        } else if (otherDec.length() < thisDec.length())
+        {
+            otherDec.append(thisDec.length() - otherDec.length(), '0');
+        }
+
+        // Сравниваем десятичные части
+        if (thisDec != otherDec) return false;
+
+        // Если оба числа равны нулю
+        if (thisInt == "0" && thisDec == string(this->precision, '0')) return true;
+
+        // Проверяем знаки чисел
+        return this->negative == other.negative;
     }
+
 
     bool operator!=(const BigNumber &other) const
     {
@@ -654,126 +685,179 @@ public:
 
         return guess;
     }
+
+    BigNumber arctan() const {
+        if (*this > BigNumber("1", precision) || *this < BigNumber("-1", precision)) {
+            throw std::invalid_argument("The arctan function is only implemented for |x| <= 1.");
+        }
+
+        BigNumber term = *this; // x^1 / 1
+        BigNumber arctanValue = term; // Начинаем с первого члена ряда
+
+        BigNumber xSquared = *this * *this; // x^2, будет использоваться для вычисления каждого нового члена
+        BigNumber divisor("1", precision); // Делитель для n
+
+        for (size_t n = 1; ; n += 2) {
+            // Вычисляем следующий член, используя предыдущий
+            term *= -xSquared;
+            divisor += BigNumber("2", precision); // Увеличиваем делитель на 2 для каждого нового члена ряда
+
+            BigNumber nextTerm = term / divisor;
+
+            // Если следующий член ряда достаточно мал, останавливаем вычисления
+            if (nextTerm.ToString() == BigNumber("0", precision).ToString()) {
+                break;
+            }
+
+            // Добавляем следующий член к значению арктангенса
+            arctanValue += nextTerm;
+        }
+
+        return arctanValue;
+    }
+
+    static BigNumber calculatePi(int precision)
+    {
+        // https://www.youtube.com/watch?v=yxZcFt0yZfg <--- this one helped
+        // https://youtu.be/6A75VBWXp2Y?si=CWKrnqiiXvqS6Fb0&t=1076
+        // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
+        precision += 10;
+        BigNumber one("1", precision), two("2", precision),
+                three("3", precision), four("4", precision);
+
+        BigNumber Pi1 = four * ((one/two).arctan() + (one/three).arctan());
+        Pi1.precision -= 10;
+        Pi1.normalize();
+
+        return Pi1;
+    }
 };
 
-BigNumber calculatePi(int precision)
-{
-    // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
-    BigNumber magicNumber = BigNumber("3", precision).sqrt() / BigNumber("8", precision);
 
-    return magicNumber;
-}
 
 int main()
 {
-    // Проверка конструктора из строкового значения
-    BigNumber n1("-123.11234", 5);
-    cout << "n1 = " << n1.ToString() << endl;
+//    // Проверка конструктора из строкового значения
+//    BigNumber n1("-123.11234", 5);
+//    cout << "n1 = " << n1.ToString() << endl;
+//
+//    // Проверка конструктора из float значения
+//    BigNumber n2(float(-2.0123456789), 5);
+//    cout << "n2 = " << n2.ToString() << endl;
+//
+//    // Проверка конструктора из double значения
+//    BigNumber n3(0990912.01235, 5);
+//    cout << "n3 = " << n3.ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка унарного минуса
+//    cout << "n1 * (-1): " << n1.ToString() << " * (-1) = " << (-n1).ToString() << endl;
+//    cout << "n3 * (-1): " << n3.ToString() << " * (-1) = " << (-n3).ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка сложения
+//    cout << "n1 + n2: " << (n1 + n2).ToString() << endl;
+//    cout << "n3 + n3: " << (n3 + n3).ToString() << endl;
+//    // Тут по сути вычитание
+//    cout << "n3 + n1: " << (n3 + n1).ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка вычитания
+//    cout << "n1 - n2: " << (n1 - n2).ToString() << endl;
+//    cout << "n3 - n3: " << (n3 - n3).ToString() << endl;
+//    // Тут по сути сложение
+//    cout << "n3 - n2: " << (n3 - n2).ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка умножения
+//    BigNumber n4("-123.234", 5);
+//    BigNumber n5(float(2.0962), 5);
+//    cout << "n4 = " << n4.ToString() << endl;
+//    cout << "n5 = " << n5.ToString() << endl;
+//
+//    cout << "n4 * n4: " << (n4 * n4).ToString() << endl;
+//    cout << "n5 * n5: " << (n5 * n5).ToString() << endl;
+//    cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка деления
+//    BigNumber n6("514", 10);
+//    BigNumber n7("7", 10);
+//    BigNumber n8("1.000000000", 10);
+//    cout << "n6 = " << n6.ToString() << endl;
+//    cout << "n7 = " << n7.ToString() << endl;
+//    cout << "n8 = " << n8.ToString() << endl;
+//
+//    cout << "n6 / n7: " << (n6 / n7).ToString() << endl;
+//    cout << "n7 / n6: " << (n7 / n6).ToString() << endl;
+//    cout << "n6 / n6: " << (n6 / n6).ToString() << endl;
+//    cout << "n8 / n7: " << (n8 / n7).ToString() << endl;
+//    cout << "n7 / n8: " << (n7 / n8).ToString() << endl;
+//    cout << endl;
+//
+//    // Проверка валидации при создании
+//    BigNumber n9("+123.12", 5);
+//    string args[] = {"123.12",
+//                     "+123.12",
+//                     "-123.12",
+//                     ".12",
+//                     "+.12",
+//                     "-.12",
+//                     "12.",
+//                     "+12.",
+//                     "-12.",
+//                     "12",
+//                     "+12",
+//                     "-12",
+//                     "0.0",
+//                     "."};
+//    for (const auto &item: args)
+//    {
+//        n9 = BigNumber(item, 5);
+//        cout << item << " -> " << n9.ToString() << endl;
+//    }
+//    cout << endl;
+//
+//
+//    // Проверка взятия корня
+//    BigNumber n10("514", 10);
+//    BigNumber n11("7", 10);
+//    BigNumber n12("1", 10);
+//    cout << "n10 = " << n10.ToString() << endl;
+//    cout << "n11 = " << n11.ToString() << endl;
+//    cout << "n12 = " << n12.ToString() << endl;
+//
+//    cout << "sqrt(n10) = " << n10.sqrt().ToString() << endl;
+//    cout << "sqrt(n11) = " << n11.sqrt().ToString() << endl;
+//    cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
+//    cout << endl;
+//
+//
+//    // Проверка возведения в степень
+//    BigNumber n13("2", 10);
+//    BigNumber n14("1.01", 10);
+//    cout << "n13 = " << n13.ToString() << endl;
+//    cout << "n14 = " << n14.ToString() << endl;
+//
+//    cout << "n13 ** 8 = " << n13.power(8).ToString() << endl;
+//    cout << "n14 ** 365 = " << n14.power(365).ToString() << endl;
+//    cout << endl;
+//
+//
+//    // Проверка арктангенса
+//    BigNumber n15("0.5", 10);
+//    cout << n15.arctan().ToString() << endl;
+//    cout << endl;
+    clock_t start = clock();
 
-    // Проверка конструктора из float значения
-    BigNumber n2(float(-2.0123456789), 5);
-    cout << "n2 = " << n2.ToString() << endl;
 
-    // Проверка конструктора из double значения
-    BigNumber n3(0990912.01235, 5);
-    cout << "n3 = " << n3.ToString() << endl;
-    cout << endl;
-
-    // Проверка унарного минуса
-    cout << "n1 * (-1): " << n1.ToString() << " * (-1) = " << (-n1).ToString() << endl;
-    cout << "n3 * (-1): " << n3.ToString() << " * (-1) = " << (-n3).ToString() << endl;
-    cout << endl;
-
-    // Проверка сложения
-    cout << "n1 + n2: " << (n1 + n2).ToString() << endl;
-    cout << "n3 + n3: " << (n3 + n3).ToString() << endl;
-    // Тут по сути вычитание
-    cout << "n3 + n1: " << (n3 + n1).ToString() << endl;
-    cout << endl;
-
-    // Проверка вычитания
-    cout << "n1 - n2: " << (n1 - n2).ToString() << endl;
-    cout << "n3 - n3: " << (n3 - n3).ToString() << endl;
-    // Тут по сути сложение
-    cout << "n3 - n2: " << (n3 - n2).ToString() << endl;
-    cout << endl;
-
-    // Проверка умножения
-    BigNumber n4("-123.234", 5);
-    BigNumber n5(float(2.0962), 5);
-    cout << "n4 = " << n4.ToString() << endl;
-    cout << "n5 = " << n5.ToString() << endl;
-
-    cout << "n4 * n4: " << (n4 * n4).ToString() << endl;
-    cout << "n5 * n5: " << (n5 * n5).ToString() << endl;
-    cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
-    cout << endl;
-
-    // Проверка деления
-    BigNumber n6("514", 10);
-    BigNumber n7("7", 10);
-    BigNumber n8("1", 10);
-    cout << "n6 = " << n6.ToString() << endl;
-    cout << "n7 = " << n7.ToString() << endl;
-    cout << "n8 = " << n8.ToString() << endl;
-
-    cout << "n6 / n7: " << (n6 / n7).ToString() << endl;
-    cout << "n7 / n6: " << (n7 / n6).ToString() << endl;
-    cout << "n6 / n6: " << (n6 / n6).ToString() << endl;
-    cout << "n8 / n7: " << (n8 / n7).ToString() << endl;
-    cout << "n7 / n8: " << (n7 / n8).ToString() << endl;
-    cout << endl;
-
-    // Проверка валидации при создании
-    BigNumber n9("+123.12", 5);
-    string args[] = {"123.12",
-                     "+123.12",
-                     "-123.12",
-                     ".12",
-                     "+.12",
-                     "-.12",
-                     "12.",
-                     "+12.",
-                     "-12.",
-                     "12",
-                     "+12",
-                     "-12",
-                     "0.0",
-                     "."};
-    for (const auto &item: args)
-    {
-        n9 = BigNumber(item, 5);
-        cout << item << " -> " << n9.ToString() << endl;
-    }
-    cout << endl;
-
-
-    // Проверка взятия корня
-    BigNumber n10("514", 10);
-    BigNumber n11("7", 10);
-    BigNumber n12("1", 10);
-    cout << "n10 = " << n10.ToString() << endl;
-    cout << "n11 = " << n11.ToString() << endl;
-    cout << "n12 = " << n12.ToString() << endl;
-
-    cout << "sqrt(n10) = " << n10.sqrt().ToString() << endl;
-    cout << "sqrt(n11) = " << n11.sqrt().ToString() << endl;
-    cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
-    cout << endl;
-
-
-    // Проверка возведения в степень
-    BigNumber n13("2", 10);
-    BigNumber n14("1.01", 10);
-    cout << "n13 = " << n13.ToString() << endl;
-    cout << "n14 = " << n14.ToString() << endl;
-
-    cout << "n13 ** 8 = " << n13.power(8).ToString() << endl;
-    cout << "n14 ** 365 = " << n14.power(365).ToString() << endl;
-    cout << endl;
-
-
-    BigNumber magicNumber = calculatePi(10);
+    BigNumber magicNumber = BigNumber::calculatePi(100);
     cout << magicNumber.ToString() << endl;
+
+
+    clock_t end = clock();
+    double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+    printf("The time: %f seconds\n", seconds);
+
     return 0;
 }
