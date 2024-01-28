@@ -255,7 +255,7 @@ public:
         // Проверяем, что точность обоих операндов одинакова
         if (this->precision != other.precision)
         {
-            throw std::invalid_argument("Precision mismatch between BigNumber operands.");
+            throw invalid_argument("Precision mismatch between BigNumber operands.");
         }
 
         BigNumber result("0", this->precision); // Инициализируем результирующее число
@@ -408,7 +408,59 @@ public:
     }
 
 
-    BigNumber operator/(const BigNumber &other) const;
+    BigNumber operator/(const BigNumber& other) const {
+        // Проверка деления на ноль
+        if (other.integerPart == "0" && other.decimalPart == string(other.precision, '0')) {
+            throw invalid_argument("Division by zero is not allowed.");
+        }
+
+        // Если точность выше, чем необходимо, временно увеличим её для проведения точного деления
+        size_t bufferSize = this->precision; // Если в результате получается периодическая дробь, то буфер должен быть больше длины периода
+        size_t tempPrecision = this->precision + bufferSize; // Например, добавляем 5 знаков для буфера
+        string thisNumber = this->integerPart + this->decimalPart + string(bufferSize, '0');
+        string otherNumber = other.integerPart + other.decimalPart;
+
+        string quotient = "0";
+        string remainder = "0";
+
+        // Алгоритм деления в столбик
+        for (size_t i = 0; i < thisNumber.length(); ++i) {
+            // "Опускаем" следующую цифру
+            remainder += thisNumber[i];
+
+            // Если цифру, которую опустили, была из дробной части
+            // Но также нам нужно снести столько цифр, сколько находится в дробной части второго числа
+            if (i == this->integerPart.length() + other.precision){
+                quotient += ".";
+            }
+
+            // Избавляемся от лидирующих нулей в остатке
+            size_t startPos = remainder.find_first_not_of('0');
+            if (startPos != string::npos) {
+                remainder = remainder.substr(startPos);
+            } else {
+                remainder = "0";
+            }
+
+            // Находим максимальное число, при умножении на которое otherNumber не превысит remainder
+            int count = 0;
+            BigNumber tempRemainder(remainder, tempPrecision);
+            BigNumber tempOtherNumber(otherNumber, tempPrecision);
+            while (tempRemainder >= tempOtherNumber) {
+                tempRemainder = tempRemainder - tempOtherNumber;
+                remainder = tempRemainder.integerPart;
+                ++count;
+            }
+
+            // Добавляем найденную цифру к частному
+            quotient += to_string(count);
+        }
+
+        BigNumber result1(quotient, this->precision);
+        result1.negative = this->negative != other.negative; // Определение знака результата
+
+        return result1;
+    }
 
     // Перегрузка оператора унарный минус
     BigNumber operator-() const
@@ -432,27 +484,25 @@ public:
     }
 
     // Перегрузка операторов сравнения
-    bool operator==(const BigNumber &other) const
-    {
+    bool operator==(const BigNumber& other) const {
         return this->negative == other.negative &&
                this->integerPart == other.integerPart &&
                this->decimalPart == other.decimalPart;
     }
 
-    bool operator!=(const BigNumber &other) const
-    {
+    bool operator!=(const BigNumber& other) const {
         return !(*this == other);
     }
 
-    bool operator<(const BigNumber &other) const
-    {
-        if (this->negative != other.negative)
-        {
+    bool operator<(const BigNumber& other) const {
+        if (this->negative != other.negative) {
             return this->negative; // Если одно число отрицательное, а другое положительное
         }
-        if (this->integerPart != other.integerPart)
-        {
+        if (this->integerPart != other.integerPart) {
             // Числа с более длинной целой частью больше
+            if (this->integerPart.length() == other.integerPart.length()) {
+                return this->integerPart < other.integerPart ^ this->negative;
+            }
             return this->integerPart.length() < other.integerPart.length() ^
                    this->negative; // Если числа отрицательные, меньшее число будет иметь большую целую часть
         }
@@ -460,18 +510,15 @@ public:
         return this->decimalPart < other.decimalPart ^ this->negative;
     }
 
-    bool operator>(const BigNumber &other) const
-    {
+    bool operator>(const BigNumber& other) const {
         return other < *this;
     }
 
-    bool operator<=(const BigNumber &other) const
-    {
+    bool operator<=(const BigNumber& other) const {
         return !(*this > other);
     }
 
-    bool operator>=(const BigNumber &other) const
-    {
+    bool operator>=(const BigNumber& other) const {
         return !(*this < other);
     }
 };
@@ -520,5 +567,18 @@ int main()
     cout << "n5 * n5: " << (n5 * n5).ToString() << endl;
     cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
     cout << endl;
+
+    // Проверка деления
+    BigNumber n6("514", 10);
+    BigNumber n7("7", 10);
+    BigNumber n8("1", 10);
+    cout << "n6 = " << n6.ToString() << endl;
+    cout << "n7 = " << n7.ToString() << endl;
+
+    cout << "n6 / n7: " << (n6 / n7).ToString() << endl;
+    cout << "n7 / n6: " << (n7 / n6).ToString() << endl;
+    cout << "n6 / n6: " << (n6 / n6).ToString() << endl;
+    cout << "n8 / n7: " << (n8 / n7).ToString() << endl;
+    cout << "n7 / n8: " << (n7 / n8).ToString() << endl;
     return 0;
 }
