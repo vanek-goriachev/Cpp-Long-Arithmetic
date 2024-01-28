@@ -59,8 +59,7 @@ public:
             if (isdigit(*it))
             {
                 integerPart.push_back(*it);
-            }
-            else
+            } else
             {
                 throw invalid_argument("Initial string for BigNumber should satisfy pattern [+-]{0-9}.{0-9}");
             }
@@ -85,8 +84,7 @@ public:
             if (isdigit(*it))
             {
                 decimalPart.push_back(*it);
-            }
-            else
+            } else
             {
                 throw invalid_argument("Initial string for BigNumber should satisfy pattern [+-]{0-9}.{0-9}");
             }
@@ -182,12 +180,15 @@ public:
     }
 
     // Конструктор из long long
-    BigNumber(long long number, size_t prec) : precision(prec) {
+    BigNumber(long long number, size_t prec) : precision(prec)
+    {
         // Проверка на отрицательное значение и установка флага
-        if (number < 0) {
+        if (number < 0)
+        {
             negative = true;
             number = -number; // Работаем с числом как с положительным
-        } else {
+        } else
+        {
             negative = false;
         }
 
@@ -432,10 +433,11 @@ public:
         return result;
     }
 
-
-    BigNumber operator/(const BigNumber& other) const {
+    BigNumber operator/(const BigNumber &other) const
+    {
         // Проверка деления на ноль
-        if (other.integerPart == "0" && other.decimalPart == string(other.precision, '0')) {
+        if (other.integerPart == "0" && other.decimalPart == string(other.precision, '0'))
+        {
             throw invalid_argument("Division by zero is not allowed.");
         }
 
@@ -449,21 +451,25 @@ public:
         string remainder = "0";
 
         // Алгоритм деления в столбик
-        for (size_t i = 0; i < thisNumber.length(); ++i) {
+        for (size_t i = 0; i < thisNumber.length(); ++i)
+        {
             // "Опускаем" следующую цифру
             remainder += thisNumber[i];
 
             // Если цифру, которую опустили, была из дробной части
             // Но также нам нужно снести столько цифр, сколько находится в дробной части второго числа
-            if (i == this->integerPart.length() + other.precision){
+            if (i == this->integerPart.length() + other.precision)
+            {
                 quotient += ".";
             }
 
             // Избавляемся от лидирующих нулей в остатке
             size_t startPos = remainder.find_first_not_of('0');
-            if (startPos != string::npos) {
+            if (startPos != string::npos)
+            {
                 remainder = remainder.substr(startPos);
-            } else {
+            } else
+            {
                 remainder = "0";
             }
 
@@ -471,7 +477,8 @@ public:
             int count = 0;
             BigNumber tempRemainder(remainder, tempPrecision);
             BigNumber tempOtherNumber(otherNumber, tempPrecision);
-            while (tempRemainder >= tempOtherNumber) {
+            while (tempRemainder >= tempOtherNumber)
+            {
                 tempRemainder = tempRemainder - tempOtherNumber;
                 remainder = tempRemainder.integerPart;
                 ++count;
@@ -496,7 +503,8 @@ public:
     };
 
     // Перегрузка оператора присваивания
-    BigNumber &operator=(const BigNumber &other) {
+    BigNumber &operator=(const BigNumber &other)
+    {
         if (this != &other)
         { // Проверка на самоприсваивание
             integerPart = other.integerPart;
@@ -507,41 +515,54 @@ public:
         return *this; // Возврат ссылки на текущий объект
     }
 
-    BigNumber operator+=(const BigNumber& other) {
+    BigNumber operator+=(const BigNumber &other)
+    {
         *this = *this + other;
         return *this;
     };
-    BigNumber operator-=(const BigNumber& other) {
+
+    BigNumber operator-=(const BigNumber &other)
+    {
         *this = *this - other;
         return *this;
     };
-    BigNumber operator*=(const BigNumber& other) {
+
+    BigNumber operator*=(const BigNumber &other)
+    {
         *this = *this * other;
         return *this;
     };
-    BigNumber operator/=(const BigNumber& other) {
+
+    BigNumber operator/=(const BigNumber &other)
+    {
         *this = *this / other;
         return *this;
     };
 
     // Перегрузка операторов сравнения
-    bool operator==(const BigNumber& other) const {
+    bool operator==(const BigNumber &other) const
+    {
         return this->negative == other.negative &&
                this->integerPart == other.integerPart &&
                this->decimalPart == other.decimalPart;
     }
 
-    bool operator!=(const BigNumber& other) const {
+    bool operator!=(const BigNumber &other) const
+    {
         return !(*this == other);
     }
 
-    bool operator<(const BigNumber& other) const {
-        if (this->negative != other.negative) {
+    bool operator<(const BigNumber &other) const
+    {
+        if (this->negative != other.negative)
+        {
             return this->negative; // Если одно число отрицательное, а другое положительное
         }
-        if (this->integerPart != other.integerPart) {
+        if (this->integerPart != other.integerPart)
+        {
             // Числа с более длинной целой частью больше
-            if (this->integerPart.length() == other.integerPart.length()) {
+            if (this->integerPart.length() == other.integerPart.length())
+            {
                 return this->integerPart < other.integerPart ^ this->negative;
             }
             return this->integerPart.length() < other.integerPart.length() ^
@@ -551,29 +572,36 @@ public:
         return this->decimalPart < other.decimalPart ^ this->negative;
     }
 
-    bool operator>(const BigNumber& other) const {
+    bool operator>(const BigNumber &other) const
+    {
         return other < *this;
     }
 
-    bool operator<=(const BigNumber& other) const {
+    bool operator<=(const BigNumber &other) const
+    {
         return !(*this > other);
     }
 
-    bool operator>=(const BigNumber& other) const {
+    bool operator>=(const BigNumber &other) const
+    {
         return !(*this < other);
     }
 
     // Вычисление степени
-    BigNumber power(int n) const {
+    BigNumber power(int n) const
+    {
         // Обработка отрицательных и нулевых показателей степени
-        if (n < 0) {
+        if (n < 0)
+        {
             throw invalid_argument("BigNumber::power - negative exponents are not supported.");
-        } else if (n == 0) {
+        } else if (n == 0)
+        {
             return BigNumber("1", this->precision); // Любое число в степени 0 равно 1
         }
 
         BigNumber result = *this; // Начинаем с текущего числа для n = 1
-        for (int i = 1; i < n; ++i) {
+        for (int i = 1; i < n; ++i)
+        {
             result *= *this; // Повторное умножение для вычисления степени
         }
 
@@ -585,17 +613,21 @@ public:
 
     // Взятие квадратного корня
 
-    BigNumber sqrt() const {
+    BigNumber sqrt() const
+    {
         // Проверка на отрицательное число
-        if (this->negative) {
+        if (this->negative)
+        {
             throw invalid_argument("Cannot take the square root of a negative number.");
         }
 
         // Проверка, является ли число нулем
-        if (this->integerPart == "0" && this->decimalPart == string(this->precision, '0')) {
+        if (this->integerPart == "0" && this->decimalPart == string(this->precision, '0'))
+        {
             return BigNumber("0", this->precision);
         }
-        if (this->integerPart == "1" && this->decimalPart == string(this->precision, '0')) {
+        if (this->integerPart == "1" && this->decimalPart == string(this->precision, '0'))
+        {
             return BigNumber("1", this->precision);
         }
 
@@ -607,16 +639,18 @@ public:
         // Уточнение предположения с помощью метода Ньютона до достижения необходимой точности
         BigNumber lastGuess("0", this->precision);
 
-        do {
+        do
+        {
             lastGuess = guess; // Сохраняем последнее предположение
-            guess = guess - (guess*guess - *this) / (two * guess);
+            guess = guess - (guess * guess - *this) / (two * guess);
         } while (guess != lastGuess);
 
         return guess;
     }
 };
 
-BigNumber calculatePi(int precision) {
+BigNumber calculatePi(int precision)
+{
     // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
     BigNumber magicNumber = BigNumber("3", precision).sqrt() / BigNumber("8", precision);
 
