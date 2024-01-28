@@ -600,9 +600,16 @@ public:
         }
 
         BigNumber result = *this; // Начинаем с текущего числа для n = 1
+        result.precision = this->precision * 5;
+        result.normalize();
+
+        BigNumber newThis = *this; // Начинаем с текущего числа для n = 1
+        newThis.precision = this->precision * 5;
+        newThis.normalize();
+
         for (int i = 1; i < n; ++i)
         {
-            result *= *this; // Повторное умножение для вычисления степени
+            result *= newThis; // Повторное умножение для вычисления степени
         }
 
         result.precision = this->precision;
