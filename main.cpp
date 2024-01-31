@@ -800,6 +800,11 @@ public:
     }
 };
 
+BigNumber operator"" _m(long double meters)
+{
+    return BigNumber(static_cast<double>(meters), 20);
+}
+
 int main()
 {
 //    // Проверка конструктора из строкового значения
@@ -845,20 +850,19 @@ int main()
 //    cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
 //    cout << endl;
 //
-//    // Проверка деления
-//    BigNumber n6("514", 10);
-//    BigNumber n7("7", 10);
-//    BigNumber n8("1.000000000", 10);
-//    cout << "n6 = " << n6.ToString() << endl;
-//    cout << "n7 = " << n7.ToString() << endl;
-//    cout << "n8 = " << n8.ToString() << endl;
-//
-//    cout << "n6 / n7: " << (n6 / n7).ToString() << endl;
-//    cout << "n7 / n6: " << (n7 / n6).ToString() << endl;
-//    cout << "n6 / n6: " << (n6 / n6).ToString() << endl;
-//    cout << "n8 / n7: " << (n8 / n7).ToString() << endl;
-//    cout << "n7 / n8: " << (n7 / n8).ToString() << endl;
-//    cout << endl;
+    // Проверка деления
+    BigNumber nd11 = 12465423._m,  nd12 = 834812._m;
+    BigNumber nd21("19513", 15),  nd22("83481", 15);
+    BigNumber nd31("226", 15),  nd32("15", 15);
+    BigNumber nd41("8419.34", 15),  nd42("193.6", 15);
+    BigNumber nd51("12465.423", 15),  nd52("83.4812", 15);
+
+    cout << nd11.ToString() << " / " << nd12.ToString() << " = " << (nd11 / nd12).ToString() << endl;
+    cout << nd21.ToString() << " / " << nd22.ToString() << " = " << (nd21 / nd22).ToString() << endl;
+    cout << nd31.ToString() << " / " << nd32.ToString() << " = " << (nd31 / nd32).ToString() << endl;
+    cout << nd41.ToString() << " / " << nd42.ToString() << " = " << (nd41 / nd42).ToString() << endl;
+    cout << nd51.ToString() << " / " << nd52.ToString() << " = " << (nd51 / nd52).ToString() << endl;
+    cout << endl;
 //
 //    // Проверка валидации при создании
 //    BigNumber n9("+123.12", 5);
