@@ -1,9 +1,7 @@
 //
 // Created by Vanek on 01.02.2024.
 //
-
-#ifndef CPPLONGARIPHMETIC_BIGNUMBER_H
-#define CPPLONGARIPHMETIC_BIGNUMBER_H
+#pragma once
 
 #include "string"
 
@@ -103,6 +101,4 @@ public:
     static BigNumber calculatePiViaArctangents(int precision);
 };
 
-BigNumber operator"" _m(long double meters);
-
-#endif //CPPLONGARIPHMETIC_BIGNUMBER_H
+BigNumber operator""_m(const char* number);

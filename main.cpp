@@ -2,7 +2,7 @@
 // Created by Vanek on 01.02.2024.
 //
 #include "iostream"
-#include "LongArithmetic.h"
+#include "LongArithmetic.hpp"
 
 using namespace std;
 
@@ -124,6 +124,7 @@ int main()
 
     BigNumber magicNumber = BigNumber::calculatePiViaArctangents(100);
     cout << magicNumber.ToString() << endl;
+    cout << BigNumber(5.1, 10).ToString() << endl;
 
     clock_t end = clock();
     double seconds = (double) (end - start) / CLOCKS_PER_SEC;
