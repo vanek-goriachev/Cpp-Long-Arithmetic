@@ -76,7 +76,6 @@ public:
     // Перегрузка операторов сравнения
     bool operator==(const BigNumber &other) const;
 
-
     bool operator!=(const BigNumber &other) const;
 
     bool operator<(const BigNumber &other) const;

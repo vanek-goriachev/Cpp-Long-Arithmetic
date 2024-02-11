@@ -734,9 +734,9 @@ BigNumber BigNumber::sqrt() const
 
 BigNumber BigNumber::arctan() const
 {
-    if (*this > BigNumber("1", precision) || *this < BigNumber("-1", precision))
+    if (*this >= BigNumber("1", precision) || *this <= BigNumber("-1", precision))
     {
-        throw std::invalid_argument("The arctan function is only implemented for |x| <= 1.");
+        throw std::invalid_argument("The arctan function is only implemented for |x| < 1.");
     }
 
     BigNumber term = *this; // x^1 / 1
