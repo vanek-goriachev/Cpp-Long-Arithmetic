@@ -2,7 +2,7 @@
 // Created by Vanek on 01.02.2024.
 //
 #include "iostream"
-#include "LongArithmetic.hpp"
+#include "my-library/LongArithmetic.hpp"
 #include <time.h>
 
 using namespace std;
