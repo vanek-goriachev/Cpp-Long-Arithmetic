@@ -1,3 +1,4 @@
+# cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_MAKE_PROGRAM="C:/Program Files (x86)/GnuWin32/bin/make.exe" -DCMAKE_CXX_COMPILER="C:/MinGW/bin/g++.exe" -DCMAKE_BUILD_TYPE=Release
 cmake_minimum_required(VERSION 3.24)  # Указание минимальной версии CMake
 
 # Имя проекта и указание используемого языка программирования.
@@ -23,17 +24,11 @@ target_link_libraries(${PROJECT_NAME} LongArithmetic)
 # Теперь можно писать make run для запуска проги
 add_custom_target(run COMMAND ${PROJECT_NAME})
 
-
-
-#...
-#
-#
-#
-## Создние исполняемого файла с тестами
+## Создание исполняемого файла с тестами
 #add_executable(tests tests.cpp)
 #
 ## Подключения библиотеки к файлу с тестами
-#target_link_libraries(tests real)
+#target_link_libraries(tests LongArithmetic)
 #
 ## Создание цели для запуска исполняемого файла с тестами
 ## Теперь можно писать make test для запуска тестов

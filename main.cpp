@@ -3,6 +3,7 @@
 //
 #include "iostream"
 #include "LongArithmetic.hpp"
+#include <time.h>
 
 using namespace std;
 
