@@ -1,4 +1,4 @@
 #include <gtest/gtest.h>
-#include <long-number-library/LongNum.hpp>
+#include <my-library/LongArithmetic.hpp>
 
-TEST() {}
+TEST(Name1, Name2) {};
