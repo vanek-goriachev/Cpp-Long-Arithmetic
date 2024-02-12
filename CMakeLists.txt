@@ -14,4 +14,4 @@ add_subdirectory(tests)
 
 target_link_libraries(${PROJECT_NAME} mylib)
 
-add_custom_target(run COMMAND ${PROJECT_NAME})
+add_custom_target(runnn COMMAND ${PROJECT_NAME})

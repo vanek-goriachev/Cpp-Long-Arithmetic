@@ -98,6 +98,8 @@ public:
     BigNumber abs() const;
 
     static BigNumber calculatePiViaArctangents(int precision);
+
+    void change_precision(int precision);
 };
 
 BigNumber operator""_m(const char* number);

@@ -773,20 +773,10 @@ BigNumber BigNumber::abs() const
     return result;
 }
 
-BigNumber BigNumber::calculatePiViaArctangents(int precision)
+void BigNumber::change_precision(int precision)
 {
-    // https://www.youtube.com/watch?v=yxZcFt0yZfg <--- this one helped
-    // https://youtu.be/6A75VBWXp2Y?si=CWKrnqiiXvqS6Fb0&t=1076
-    // https://youtu.be/A3PL61fHzjs?si=Ylpw3Jh93Tl31pDs&t=958
-    precision += 10;
-    BigNumber one("1", precision), two("2", precision),
-            three("3", precision), four("4", precision);
-
-    BigNumber Pi1 = four * ((one / two).arctan() + (one / three).arctan());
-    Pi1.precision -= 10;
-    Pi1.normalize();
-
-    return Pi1;
+    this->precision = precision;
+    this->normalize();
 }
 
 BigNumber operator""_m(const char* number)
