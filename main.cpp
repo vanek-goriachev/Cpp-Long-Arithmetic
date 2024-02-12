@@ -25,14 +25,16 @@ BigNumber calculate_pi(int precision) {
             three("3", precision), four("4", precision);
 
     BigNumber Pi1 = four * ((one / two).arctan() + (one / three).arctan());
-    Pi1.change_precision(precision-10);
+    Pi1.change_precision(precision - 10);
 
 
     return Pi1;
 }
 
-int main() {
-    BigNumber magicNumber = clock_decorator(100, calculate_pi);
+int main(int argc, char *argv[]) {
+    int precision;
+    cin >> precision;
+    BigNumber magicNumber = clock_decorator(precision, calculate_pi);
     cout << magicNumber.ToString() << endl;
     return 0;
 }
