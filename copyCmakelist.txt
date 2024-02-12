@@ -1,0 +1,66 @@
+# cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_MAKE_PROGRAM="C:/Program Files (x86)/GnuWin32/bin/make.exe" -DCMAKE_CXX_COMPILER="C:/MinGW/bin/g++.exe" -DCMAKE_BUILD_TYPE=Release
+# cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake_minimum_required(VERSION 3.24)  # Указание минимальной версии CMake
+
+# Имя проекта и указание используемого языка программирования.
+project(CppLongAriphmetic  LANGUAGES CXX)
+
+# Указываем стандарт C++
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Добавление библиотеки
+add_library(LongArithmetic SHARED
+        my-library/LongArithmetic.hpp
+        my-library/LongArithmetic.cpp
+        )
+
+# Создание исполняемого файла из указанных исходных файлов.
+add_executable(${PROJECT_NAME} main.cpp)
+
+# Подключения библиотеки к файлу
+target_link_libraries(${PROJECT_NAME} LongArithmetic)
+
+# Создание цели для запуска исполняемого файла
+# Теперь можно писать make run для запуска проги
+add_custom_target(run COMMAND ${PROJECT_NAME})
+
+# ----- TESTS -----
+
+## Создание исполняемого файла с тестами
+#add_executable(tests tests.cpp)
+#
+## Подключения библиотеки к файлу с тестами
+#target_link_libraries(tests LongArithmetic)
+#
+## Создание цели для запуска исполняемого файла с тестами
+## Теперь можно писать make test для запуска тестов
+#add_custom_target(test COMMAND tests)
+
+
+# ----- TESTS -----
+
+
+#include(FetchContent)
+#FetchContent_Declare(
+#        googletest
+#        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+#)
+## For Windows: Prevent overriding the parent project's compiler/linker settings
+#set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+#FetchContent_MakeAvailable(googletest)
+#
+#enable_testing()
+#
+#add_executable(
+#        hello_test
+#        tests.cpp
+#)
+#target_link_libraries(
+#        hello_test
+#        GTest::gtest_main
+#)
+#
+#include(GoogleTest)
+#gtest_discover_tests(hello_test)
+#add_custom_target(testss COMMAND hello_test)

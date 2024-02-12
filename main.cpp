@@ -2,134 +2,39 @@
 // Created by Vanek on 01.02.2024.
 //
 #include "iostream"
-#include "LongArithmetic.hpp"
-#include <time.h>
+#include "my-library/LongArithmetic.hpp"
+#include <ctime>
 
 using namespace std;
 
-int main()
-{
-//    // Проверка конструктора из строкового значения
-//    BigNumber n1("-123.11234", 5);
-//    cout << "n1 = " << n1.ToString() << endl;
-//
-//    // Проверка конструктора из float значения
-//    BigNumber n2(float(-2.0123456789), 5);
-//    cout << "n2 = " << n2.ToString() << endl;
-//
-//    // Проверка конструктора из double значения
-//    BigNumber n3(0990912.01235, 5);
-//    cout << "n3 = " << n3.ToString() << endl;
-//    cout << endl;
-//
-//    // Проверка унарного минуса
-//    cout << "n1 * (-1): " << n1.ToString() << " * (-1) = " << (-n1).ToString() << endl;
-//    cout << "n3 * (-1): " << n3.ToString() << " * (-1) = " << (-n3).ToString() << endl;
-//    cout << endl;
-//
-//    // Проверка сложения
-//    cout << "n1 + n2: " << (n1 + n2).ToString() << endl;
-//    cout << "n3 + n3: " << (n3 + n3).ToString() << endl;
-//    // Тут по сути вычитание
-//    cout << "n3 + n1: " << (n3 + n1).ToString() << endl;
-//    cout << endl;
-//
-//    // Проверка вычитания
-//    cout << "n1 - n2: " << (n1 - n2).ToString() << endl;
-//    cout << "n3 - n3: " << (n3 - n3).ToString() << endl;
-//    // Тут по сути сложение
-//    cout << "n3 - n2: " << (n3 - n2).ToString() << endl;
-//    cout << endl;
-//
-//    // Проверка умножения
-//    BigNumber n4("-123.234", 5);
-//    BigNumber n5(float(2.0962), 5);
-//    cout << "n4 = " << n4.ToString() << endl;
-//    cout << "n5 = " << n5.ToString() << endl;
-//
-//    cout << "n4 * n4: " << (n4 * n4).ToString() << endl;
-//    cout << "n5 * n5: " << (n5 * n5).ToString() << endl;
-//    cout << "n4 * n5: " << (n4 * n5).ToString() << endl;
-//    cout << endl;
-//
-
-//    // Проверка деления
-//    BigNumber nd11 = 12465423._m,  nd12 = 834812._m;
-//    BigNumber nd21("19513", 15),  nd22("83481", 15);
-//    BigNumber nd31("226", 15),  nd32("15", 15);
-//    BigNumber nd41("8419.34", 15),  nd42("193.6", 15);
-//    BigNumber nd51("12465.423", 15),  nd52("83.4812", 15);
-//
-//    cout << nd11.ToString() << " / " << nd12.ToString() << " = " << (nd11 / nd12).ToString() << endl;
-//    cout << nd21.ToString() << " / " << nd22.ToString() << " = " << (nd21 / nd22).ToString() << endl;
-//    cout << nd31.ToString() << " / " << nd32.ToString() << " = " << (nd31 / nd32).ToString() << endl;
-//    cout << nd41.ToString() << " / " << nd42.ToString() << " = " << (nd41 / nd42).ToString() << endl;
-//    cout << nd51.ToString() << " / " << nd52.ToString() << " = " << (nd51 / nd52).ToString() << endl;
-//    cout << endl;
-//
-
-//    // Проверка валидации при создании
-//    BigNumber n9("+123.12", 5);
-//    string args[] = {"123.12",
-//                     "+123.12",
-//                     "-123.12",
-//                     ".12",
-//                     "+.12",
-//                     "-.12",
-//                     "12.",
-//                     "+12.",
-//                     "-12.",
-//                     "12",
-//                     "+12",
-//                     "-12",
-//                     "0.0",
-//                     "."};
-//    for (const auto &item: args)
-//    {
-//        n9 = BigNumber(item, 5);
-//        cout << item << " -> " << n9.ToString() << endl;
-//    }
-//    cout << endl;
-//
-//
-//    // Проверка взятия корня
-//    BigNumber n10("514", 10);
-//    BigNumber n11("7", 10);
-//    BigNumber n12("1", 10);
-//    cout << "n10 = " << n10.ToString() << endl;
-//    cout << "n11 = " << n11.ToString() << endl;
-//    cout << "n12 = " << n12.ToString() << endl;
-//
-//    cout << "sqrt(n10) = " << n10.sqrt().ToString() << endl;
-//    cout << "sqrt(n11) = " << n11.sqrt().ToString() << endl;
-//    cout << "sqrt(n12) = " << n12.sqrt().ToString() << endl;
-//    cout << endl;
-//
-//
-//    // Проверка возведения в степень
-//    BigNumber n13("2", 10);
-//    BigNumber n14("1.01", 10);
-//    cout << "n13 = " << n13.ToString() << endl;
-//    cout << "n14 = " << n14.ToString() << endl;
-//
-//    cout << "n13 ** 8 = " << n13.power(8).ToString() << endl;
-//    cout << "n14 ** 365 = " << n14.power(365).ToString() << endl;
-//    cout << endl;
-//
-//
-//    // Проверка арктангенса
-//    BigNumber n15("0.5", 10);
-//    cout << n15.arctan().ToString() << endl;
-//    cout << endl;
+BigNumber clock_decorator(int precision, BigNumber func(int)) {
     clock_t start = clock();
 
-    BigNumber magicNumber = BigNumber::calculatePiViaArctangents(100);
-    cout << magicNumber.ToString() << endl;
-    cout << BigNumber(5.1, 10).ToString() << endl;
+    BigNumber result = func(precision);
 
     clock_t end = clock();
     double seconds = (double) (end - start) / CLOCKS_PER_SEC;
     printf("The time: %f seconds\n", seconds);
 
+    return result;
+}
+
+BigNumber calculate_pi(int precision) {
+    precision += 10;
+    BigNumber one("1", precision), two("2", precision),
+            three("3", precision), four("4", precision);
+
+    BigNumber Pi1 = four * ((one / two).arctan() + (one / three).arctan());
+    Pi1.change_precision(precision - 10);
+
+
+    return Pi1;
+}
+
+int main(int argc, char *argv[]) {
+    int precision;
+    cin >> precision;
+    BigNumber magicNumber = clock_decorator(precision, calculate_pi);
+    cout << magicNumber.ToString() << endl;
     return 0;
 }
