@@ -33,6 +33,7 @@ BigNumber calculate_pi(int precision) {
 
 int main(int argc, char *argv[]) {
     int precision;
+    cout << "Введите требуемое количество знаков после запятой";
     cin >> precision;
     BigNumber magicNumber = clock_decorator(precision, calculate_pi);
     cout << magicNumber.ToString() << endl;
