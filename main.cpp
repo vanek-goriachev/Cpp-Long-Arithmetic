@@ -31,10 +31,17 @@ BigNumber calculate_pi(int precision) {
     return Pi1;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     int precision;
-    cout << "Введите требуемое количество знаков после запятой";
-    cin >> precision;
+
+    if (argc != 2) {
+        cout << "Введите требуемое количество знаков после запятой\n";
+        cin >> precision;
+    } else {
+        char* end;
+        precision = std::strtol(argv[1], &end, 10);
+    }
+
     BigNumber magicNumber = clock_decorator(precision, calculate_pi);
     cout << magicNumber.ToString() << endl;
     return 0;
